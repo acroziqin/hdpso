@@ -44,7 +44,46 @@ class Penjadwalan:
             i += 1
         self.set_populasi(np.array(partikel))
 
+    def masukkan_ke_seluruh_hari(self):
+        """Mencari sks tiap posisi (jadwal)
+
+        < 54 : 2 ; < 67 : 3 ; < 71 : 2 ; 1
+        """
+        populasi = self.get_populasi().tolist()
+        size = self.get_size()
+        i = 0
+        while i < size:
+            iline = 0
+            while iline < len(populasi[i]):
+                line = populasi[i][iline]
+                if line < 54:
+                    populasi[i].insert(iline, line)
+                    place_where_skip_happened = iline
+                    iline += 1
+                elif line < 67:
+                    populasi[i].insert(iline, line)
+                    populasi[i].insert(iline, line)
+                    place_where_skip_happened = iline
+                    iline += 2
+                elif line < 71:
+                    populasi[i].insert(iline, line)
+                    place_where_skip_happened = iline
+                    iline += 1
+                iline += 1
+            i += 1
+        return np.array(populasi)
+
+    def fitness(self):
+        """Menghitung fitness"""
+        seluruh_hari = self.masukkan_ke_seluruh_hari()
+        return seluruh_hari
+
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
     JADWAL.populasi_awal()
+    print("Populasi Awal")
     print(JADWAL.get_populasi())
+    JADWAL.fitness()
+    print()
+    print("Fitness")
+    print(JADWAL.fitness())
