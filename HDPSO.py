@@ -6,7 +6,7 @@ import numpy as np
 
 class Penjadwalan:
     """Kelas untuk penjadwalan menggunakan HDPSO"""
-    def __init__(self, bloc=1, bglob=0.5, brand=0.00001, size=5):
+    def __init__(self, bloc=1, bglob=0.5, brand=0.00001, size=5, n_posisi=577):
         self.populasi = [[]]
         self.bglob = bglob
         self.bloc = bloc
@@ -15,6 +15,7 @@ class Penjadwalan:
         self.rloc = []
         self.rrand = []
         self.size = size
+        self.n_posisi = n_posisi
 
     def set_populasi(self, pop):
         """Ganti populasi"""
@@ -28,26 +29,22 @@ class Penjadwalan:
         """Ambil ukuran populasi"""
         return self.size
 
-    # def r(self, m, n, o):
-        # m, n are the number of rows, cols of output
-        # return np.random.rand(m, n).argsort(axis=axis)
-        # for i in range(len(o)):
-        #     pass
-        # o = np.array(np.arange(m, n))
-        # np.random.shuffle(o)
-        # p = np.concatenate(o, o)
-        # p = np.array([np.array(o), np.array(o))
-        # return p
+    def get_n_posisi(self):
+        """Ambil banyak dimensi"""
+        return self.n_posisi
+
+    def populasi_awal(self):
+        """Inisialisasi populasi awal"""
+        size = self.get_size()
+        n_posisi = self.get_n_posisi()
+        partikel = []
+        i = 0
+        while i < size:
+            partikel.append(random.sample(range(1, n_posisi + 1), n_posisi))
+            i += 1
+        self.set_populasi(np.array(partikel))
 
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
-    # POPULASI_AWAL = np.random.randint(1, 14, size=(JADWAL.get_size(), 20))
-    POPULASI_AWAL = random.sample(range(1, 11), 10)
-    POPULASI_DUA = random.sample(range(1, 11), 10)
-    # POPULASI_AWAL = JADWAL.r(1, 11, 1)
-    # POPULASI_AWAL = np.arange(1, 11)
-
-    # np.random.shuffle(POPULASI_AWAL)
-    X = list(zip(POPULASI_AWAL, POPULASI_DUA))
-    JADWAL.set_populasi(np.transpose(X))
+    JADWAL.populasi_awal()
     print(JADWAL.get_populasi())
