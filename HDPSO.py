@@ -44,10 +44,9 @@ class Penjadwalan:
             i += 1
         self.set_populasi(np.array(partikel))
 
-    def masukkan_ke_seluruh_hari(self):
-        """Mencari sks tiap posisi (jadwal)
-
-        < 54 : 2 ; < 67 : 3 ; < 71 : 2 ; 1
+    def seluruh_hari(self):
+        """Memasukkan posisi tiap solusi ke seluruh hari
+        dengan memanfaatkan SKS tiap posisi (pengajaran)
         """
         populasi = self.get_populasi().tolist()
         size = self.get_size()
@@ -58,32 +57,61 @@ class Penjadwalan:
                 line = populasi[i][iline]
                 if line < 54:
                     populasi[i].insert(iline, line)
-                    place_where_skip_happened = iline
                     iline += 1
                 elif line < 67:
                     populasi[i].insert(iline, line)
                     populasi[i].insert(iline, line)
-                    place_where_skip_happened = iline
                     iline += 2
                 elif line < 71:
                     populasi[i].insert(iline, line)
-                    place_where_skip_happened = iline
                     iline += 1
                 iline += 1
             i += 1
         return np.array(populasi)
 
+    def jadi_jadwal(self):
+        """Jadikan tiap solusi menjadi jadwal layaknya jadwal sebenarnya."""
+        return 0
+
+    def c_dosen(self):
+        """Constraint Dosen bentrok ngajar. Sama Jam & Hari."""
+        populasi = self.get_populasi().tolist()
+        dosen = [[54, 55],   # dosen[0] mengajar pelajaran 54 & 55
+                 [3, 51],    # dosen[1] mengajar pelajaran 3 & 51
+                 [1, 2, 53], # dosen[2] mengajar pelajaran 1, 2, & 53
+                 [67, 68, 69, 70],
+                 [4, 5, 6, 7],
+                 [15, 16, 17, 18],
+                 [8, 9, 10, 64],
+                 [36, 37, 41, 45],
+                 [28, 29, 30, 46],
+                 [23, 33, 50, 62],
+                 [21, 22, 24],
+                 [11, 12, 13, 14],
+                 [58, 59],
+                 [19, 20],
+                 [38, 39],
+                 [34, 35],
+                 [31, 65],
+                 [25, 26, 37],
+                 [60, 61],
+                 [44, 56, 57],
+                 [42, 48],
+                 [32, 40, 43]]
+        return populasi[0].index(dosen[0][0])
+
     def fitness(self):
         """Menghitung fitness"""
-        seluruh_hari = self.masukkan_ke_seluruh_hari()
-        return seluruh_hari
+        # seluruh_hari = self.seluruh_hari()[0][10]
+        # jadwal = self.jadi_jadwal(seluruh_hari)
+        return self.c_dosen()
 
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
     JADWAL.populasi_awal()
-    print("Populasi Awal")
-    print(JADWAL.get_populasi())
-    JADWAL.fitness()
-    print()
-    print("Fitness")
+    # print("Populasi Awal")
+    # print(JADWAL.get_populasi())
+    # JADWAL.fitness()
+    # print()
+    # print("Fitness")
     print(JADWAL.fitness())
