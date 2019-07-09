@@ -1,5 +1,6 @@
 """Program ini adalah program optimasi penjadwalan mata kuliah di STAIMA Al-Hikam Malang
 menggunakan Hybrid Discrete PSO"""
+# pylint: disable=cell-var-from-loop
 
 import random
 import numpy as np
