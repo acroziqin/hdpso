@@ -72,9 +72,49 @@ class Penjadwalan:
             i += 1
         return np.array(populasi)
 
+    def days(self):
+        """3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
+        days[0] = Partikel 1
+        days[1] = Partikel 2
+        days[2] = Partikel 3
+        dst.
+        days[i][0] = Senin
+        days[i][1] = Selasa
+        days[i][2] = Rabu
+        dst."""
+        populasi = self.seluruh_hari().tolist()
+        periode = 12  # Total periode dalam sehari
+        ruang = []
+        # ruang[:5]    = Ruang 101
+        # ruang[5:10]  = Ruang 102
+        # ruang[10:15] = Ruang 103
+        # dst.
+        for j in populasi:
+            ruang.append([j[i * periode:(i + 1) * periode] for i in range((len(j) + periode - 1) //
+                                                                          periode)])
+
+        nhari = 5  # Jumlah hari aktif dalam seminggu
+        days = []  # 3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
+        # days[0] = Partikel 1
+        # days[1] = Partikel 2
+        # days[2] = Partikel 3
+        # dst.
+        # days[i][0] = Senin
+        # days[i][1] = Selasa
+        # days[i][2] = Rabu
+        # dst.
+        for j in range(nhari):
+            hari = []
+            for k in ruang:
+                day = [k[i * nhari + j] for i in range(len(k) // nhari)]
+                hari.append(list(chain.from_iterable(day)))
+            days.append(hari)
+
+        return np.transpose(days, (1, 0, 2))
+
     def c_dosen_n_kelas(self, data):
         """Constraint Dosen / Kelas bentrok. Walaupun sama Jam & Hari."""
-        populasi = self.get_populasi().tolist()
+        populasi = self.seluruh_hari().tolist()
         nilaip_indeksd = []  # [Dosen ke, Pelajaran ke]
         # Dari partikel (P), Nilai yang di bawah 71 ada di indeks ke berapa saja?
         indeksp_bawah71 = []
@@ -117,35 +157,7 @@ class Penjadwalan:
 
     def c_ganda(self):
         """Bentrok pelajaran ganda pada hari yang sama"""
-        populasi = self.get_populasi().tolist()
-        periode = 12  # Total periode dalam sehari
-        ruang = []
-        # ruang[:5]    = Ruang 101
-        # ruang[5:10]  = Ruang 102
-        # ruang[10:15] = Ruang 103
-        # dst.
-        for j in populasi:
-            ruang.append([j[i * periode:(i + 1) * periode] for i in range((len(j) + periode - 1) //
-                                                                          periode)])
-
-        nhari = 5  # Jumlah hari aktif dalam seminggu
-        days = []  # 3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
-        # days[0] = Partikel 1
-        # days[1] = Partikel 2
-        # days[2] = Partikel 3
-        # dst.
-        # days[i][0] = Senin
-        # days[i][1] = Selasa
-        # days[i][2] = Rabu
-        # dst.
-        for j in range(nhari):
-            hari = []
-            for k in ruang:
-                day = [k[i * nhari + j] for i in range(len(k) // nhari)]
-                hari.append(list(chain.from_iterable(day)))
-            days.append(hari)
-
-        days = np.transpose(days, (1, 0, 2))
+        days = self.days()
 
         # Pelajaran yang mempunyai waktu dua pertemuan seminggu
         ganda = [[67, 68],
@@ -177,6 +189,27 @@ class Penjadwalan:
             batasan3.append(count)
 
         return batasan3
+
+    def c_terpotong(self, data):
+        """Pelajaran yang waktunya terpotong (berada di 2 hari)"""
+        days = self.days()
+        pelajaran = list(chain.from_iterable(data))
+        pelajaranhari = [] # pelajaran[i][j] ada di hari apa saja?
+        for m in days:
+            k = []
+            for i, j in enumerate(pelajaran):
+                k.append([i for i, el in enumerate(m) if j in el])
+            pelajaranhari.append(k)
+
+        batasan4 = []  # Batasan 4 (Pelajaran yang waktunya terpotong (berada di 2 hari))
+        for i in pelajaranhari:
+            count = 0
+            for j in i:
+                if len(j) > 1:
+                    count += 1
+            batasan4.append(count)
+
+        return batasan4
 
     def fitness(self):
         """Menghitung fitness"""
@@ -218,7 +251,8 @@ class Penjadwalan:
         c_dosen = self.c_dosen_n_kelas(dosen)
         c_kelas = self.c_dosen_n_kelas(kelas)
         c_ganda = self.c_ganda()
-        return c_ganda
+        c_terpotong = self.c_terpotong(kelas)
+        return c_terpotong
 
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
