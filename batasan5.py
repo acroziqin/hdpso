@@ -1,5 +1,5 @@
 """
-Batasan 2
+Batasan 4
 """
 import itertools
 from itertools import groupby
@@ -41,7 +41,7 @@ I = [493, 486, 352, 62, 62, 62, 361, 180, 549, 138, 511, 218, 256, 195, 70, 70, 
      257, 34, 34, 340, 521, 325, 280, 179, 172, 501, 515, 520, 237, 432, 310, 162, 430, 358, 248,
      353, 251, 289, 94, 88, 343, 382]
 
-B = [296, 480, 146, 301, 517, 16, 16, 143, 326, 503, 80, 292, 539, 52, 52, 74, 352, 129, 554, 127,
+J = [296, 480, 146, 301, 517, 16, 16, 143, 326, 503, 80, 292, 539, 52, 52, 74, 352, 129, 554, 127,
      4, 4, 193, 526, 294, 30, 30, 234, 103, 185, 91, 8, 8, 12, 12, 577, 266, 330, 278, 242, 564,
      149, 168, 229, 425, 424, 240, 520, 334, 559, 472, 230, 244, 569, 436, 422, 232, 496, 482, 1,
      1, 123, 325, 40, 40, 507, 207, 455, 573, 516, 453, 561, 197, 470, 75, 274, 481, 117, 222, 404,
@@ -181,66 +181,27 @@ H = [346, 492, 286, 432, 183, 90, 26, 26, 233, 494, 461, 14, 14, 22, 22, 540, 36
      48, 465, 30, 30, 40, 40, 442, 193, 1, 1, 114, 389, 122, 350, 373, 347, 94, 45, 45, 56, 56, 56,
      5, 5, 205, 168, 223]
 
-P = [I, B, E, G, H]
+P = [I, J, E, G, H]
 
-N = 12  # Total periode dalam sehari
-C = []
-# C[:5]    = Ruang 101
-# C[5:10]  = Ruang 102
-# C[10:15] = Ruang 103
-# dst.
-for j in P:
-    C.append([j[i * N:(i + 1) * N] for i in range((len(j) + N - 1) // N)])
+Q = np.arange(660)
 
-NHARI = 5  # Jumlah hari aktif dalam seminggu
-DAYS = []  # 3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
-# DAYS[0] = Partikel 1
-# DAYS[1] = Partikel 2
-# DAYS[2] = Partikel 3
-# dst.
-# DAYS[i][0] = Senin
-# DAYS[i][1] = Selasa
-# DAYS[i][2] = Rabu
-# dst.
-for j in range(NHARI):
-    HARI = []
-    for k in C:
-        DAY = [k[i * NHARI + j] for i in range(len(k) // NHARI)]
-        HARI.append(list(chain.from_iterable(DAY)))
-    DAYS.append(HARI)
+# Jam ishoma selain Jumat
+# A = [j for i, j in enumerate(I) if i % 12 == 6 and i % 60 != 54]
+A = [[j for i, j in enumerate(k) if i % 12 == 6 and i % 60 != 54] for k in P]
 
-DAYS = np.transpose(DAYS, (1, 0, 2))
+# Jumatan dan setelahnya
+B = [[j for i, j in enumerate(k) if 52 < i % 60 < 60] for k in P]
 
-# Pelajaran yang mempunyai waktu dua pertemuan seminggu
-D = [[67, 68],
-     [69, 70]]
+# Senin & selasa sore
+C = [[j for i, j in enumerate(k) if i > 246 if 6 < i % 60 < 12 or 18 < i % 60 < 24] for k in P]
 
-# [[3], [2, 3]]
-# [[1, 2], [4]]
-# P seharusnya [[2, ]]
-Q = []
-for m in DAYS:
-    O = []
-    for j in D:
-        P = []  # D[i][j] ada di hari apa saja?
-        for l in j:
-            P.append([i for i, el in enumerate(m) if l in el])
-        O.append(list(chain.from_iterable(P)))
-    Q.append(O)
+# Semua data (termasuk dummy) yang masuk di periode "tak tersedia"
+D = [list(chain.from_iterable([A[i], B[i], C[i]])) for i in range(len(P))]
 
-S = []
-for i in Q:
-    R = []  # Jumlah hari yang sama per pelajaran
-    for j in i:
-        R.append(list(Counter(j).values()))
-    S.append(list(chain.from_iterable(R)))  # Jumlah hari yang sama
+# Data dummy dihapus, sehingga hanya data pelajaran
+E = [[i for i in j if i < 71] for j in D]
 
-U = []  # Batasan 3 (Bentrok pelajaran pada hari yang sama)
-for i in S:
-    T = 0    # Total hari yang sama
-    for j in i:
-        if j > 1:
-            T += 1
-    U.append(T)
+# Batasan 5 (Data pelajaran yang masuk di periode "tak tersedia")
+F = [len(i) for i in E]
 
-print(U)
+print(F)

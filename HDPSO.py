@@ -47,7 +47,7 @@ class Penjadwalan:
             i += 1
         self.set_populasi(np.array(partikel))
 
-    def seluruh_hari(self):
+    def perbaikan_partikel(self):
         """Memasukkan posisi tiap solusi ke seluruh hari
         dengan memanfaatkan SKS tiap posisi (pengajaran)
         """
@@ -82,7 +82,7 @@ class Penjadwalan:
         days[i][1] = Selasa
         days[i][2] = Rabu
         dst."""
-        populasi = self.seluruh_hari().tolist()
+        populasi = self.perbaikan_partikel().tolist()
         periode = 12  # Total periode dalam sehari
         ruang = []
         # ruang[:5]    = Ruang 101
@@ -114,7 +114,7 @@ class Penjadwalan:
 
     def c_dosen_n_kelas(self, data):
         """Constraint Dosen / Kelas bentrok. Walaupun sama Jam & Hari."""
-        populasi = self.seluruh_hari().tolist()
+        populasi = self.perbaikan_partikel().tolist()
         nilaip_indeksd = []  # [Dosen ke, Pelajaran ke]
         # Dari partikel (P), Nilai yang di bawah 71 ada di indeks ke berapa saja?
         indeksp_bawah71 = []
@@ -139,7 +139,7 @@ class Penjadwalan:
                 row.append(temp)  # Masukkan C ke row
             nilaid_selainp.append(row)
 
-        batasan1 = []  # Batasan pertama: bentrok dosen
+        batasan = []  # Batasan pertama: bentrok dosen
         for key, val in enumerate(nilaid_selainp):
             count = 0
             for i, j in enumerate(val):
@@ -151,9 +151,9 @@ class Penjadwalan:
                     if 54 <= k < 67:
                         if (populasi[key].index(k) + 2 - indeksp_bawah71[key][i]) % 60 == 0:
                             count += 1
-            batasan1.append(count)
+            batasan.append(count)
 
-        return batasan1
+        return batasan
 
     def c_ganda(self):
         """Bentrok pelajaran ganda pada hari yang sama"""
@@ -166,9 +166,9 @@ class Penjadwalan:
         gandahari = []  # ganda[i][j] ada di hari apa saja?
         for valdays in days:
             temp1 = []
-            for i, j in enumerate(ganda):
+            for j in ganda:
                 temp2 = []
-                for k, valj in enumerate(j):
+                for valj in j:
                     temp2.append([i for i, el in enumerate(valdays) if valj in el])
                 temp1.append(list(chain.from_iterable(temp2)))
             gandahari.append(temp1)
@@ -195,10 +195,10 @@ class Penjadwalan:
         days = self.days()
         pelajaran = list(chain.from_iterable(data))
         pelajaranhari = [] # pelajaran[i][j] ada di hari apa saja?
-        for m in days:
+        for valdays in days:
             k = []
             for i, j in enumerate(pelajaran):
-                k.append([i for i, el in enumerate(m) if j in el])
+                k.append([i for i, el in enumerate(valdays) if j in el])
             pelajaranhari.append(k)
 
         batasan4 = []  # Batasan 4 (Pelajaran yang waktunya terpotong (berada di 2 hari))
@@ -211,8 +211,34 @@ class Penjadwalan:
 
         return batasan4
 
+    def c_tak_tersedia(self):
+        """Data pelajaran yang masuk di periode 'tak tersedia'"""
+        populasi = self.perbaikan_partikel().tolist()
+        # Jam ishoma selain Jumat
+        ishoma = [[j for i, j in enumerate(k) if i % 12 == 6 and i % 60 != 54] for k in populasi]
+
+        # Jumatan dan setelahnya
+        jumat = [[j for i, j in enumerate(k) if 52 < i % 60 < 60] for k in populasi]
+
+        # Senin & selasa sore
+        seninselasa = [[j for i, j in enumerate(k) if i > 246 if 6 < i % 60 < 12 or 18 < i % 60 <
+                        24] for k in populasi]
+
+        # Semua data (termasuk dummy) yang masuk di periode "tak tersedia"
+        semua = [list(chain.from_iterable([ishoma[i], jumat[i], seninselasa[i]])) for i in
+                 range(len(populasi))]
+
+        # Data dummy dihapus, sehingga hanya data pelajaran
+        pelajaran = [[i for i in j if i < 71] for j in semua]
+
+        # Batasan 5
+        batasan5 = [len(i) for i in pelajaran]
+
+        return batasan5
+
     def fitness(self):
         """Menghitung fitness"""
+        size = self.get_size()
         dosen = [[54, 55],   # Dosen D[0] mengajar pelajaran 54 dan 55
                  [3, 51],    # Dosen D[1] mengajar pelajaran 3 dan 51
                  [1, 2, 53], # Dosen D[2] mengajar pelajaran 1, 2, dan 53
@@ -251,8 +277,11 @@ class Penjadwalan:
         c_dosen = self.c_dosen_n_kelas(dosen)
         c_kelas = self.c_dosen_n_kelas(kelas)
         c_ganda = self.c_ganda()
+        c_tak_tersedia = self.c_tak_tersedia()
         c_terpotong = self.c_terpotong(kelas)
-        return c_terpotong
+        fitness = [1 / (1 + c_dosen[i] + c_kelas[i] + c_ganda[i] + c_tak_tersedia[i] +
+                        c_terpotong[i]) for i in range(size)]
+        return fitness
 
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
