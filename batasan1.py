@@ -3,7 +3,7 @@ Mencari nilai yang kurang dari 71.
 Jika tidak ada, maka berhenti.
 Jika ada, maka cek di D ada di indeks ke berapa
 """
-# import numpy as np
+import numpy as np
 I = [493, 486, 352, 62, 62, 62, 361, 180, 549, 138, 511, 218, 256, 195, 70, 70, 160, 5, 5, 550,
      464, 118, 157, 347, 479, 182, 503, 122, 392, 58, 58, 58, 154, 506, 381, 387, 283, 560, 77,
      523, 32, 32, 306, 425, 16, 16, 155, 332, 41, 41, 92, 54, 54, 54, 318, 346, 436, 423, 449, 445,
@@ -217,8 +217,9 @@ for i in P:
     row = []
     for b in i:
         if b < 71:
-            # Masukkan i dan indeks dari j yang isinya kurang dari 71 ke row
-            row.append([[i, j.index(b)] for i, j in enumerate(D) if b in j][0])
+            # Masukkan k dan indeks dari j yang isinya kurang dari 71 ke row
+            # Masukkan urutan dosen dan pelajarannya ke daftar pelajaran dosen
+            row.append([[k, j.index(b)] for k, j in enumerate(D) if b in j][0])
     NILAIPINDEKSD.append(row)
     # Masukkan i ke-x yang kurang dari 71 ke row71
     row71 = list(filter(lambda x: i[x] < 71, range(len(i))))
@@ -226,12 +227,12 @@ for i in P:
 
 NILAIDSELAINP = []  # Nilai D selain nilai P
 for a in NILAIPINDEKSD:
-    row = []
+    row1 = []
     for b in a:
         C = D[b[0]][:]  # Salin Dosen b[0] ke C
         del C[b[1]]  # Menghapus Dosen b[0] pelajaran b[1] tanpa menggangu variabel D asal
-        row.append(C)  # Masukkan C ke row
-    NILAIDSELAINP.append(row)
+        row1.append(C)  # Masukkan C ke row
+    NILAIDSELAINP.append(row1)
 
 B1 = []  # Batasan pertama: bentrok dosen
 for a, b in enumerate(NILAIDSELAINP):
@@ -245,6 +246,6 @@ for a, b in enumerate(NILAIDSELAINP):
             if 54 <= k < 67:
                 if (P[a].index(k) + 2 - INDEKSPBAWAH71[a][i]) % 60 == 0:
                     F += 1
-    I.append(F)
+    B1.append(F)
 
-print(B1)
+print(NILAIPINDEKSD)

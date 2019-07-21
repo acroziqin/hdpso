@@ -123,6 +123,7 @@ class Penjadwalan:
             for k in i:
                 if k < 71:
                     # Masukkan i dan indeks dari j yang isinya kurang dari 71 ke row
+                    # Masukkan posisi ke daftar 
                     row.append([[i, j.index(k)] for i, j in enumerate(data) if k in j][0])
             nilaip_indeksd.append(row)
             # Masukkan i ke-x yang kurang dari 71 ke row71

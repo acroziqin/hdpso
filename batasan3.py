@@ -243,4 +243,4 @@ for i in S:
             T += 1
     U.append(T)
 
-print(U)
+print(Q)
