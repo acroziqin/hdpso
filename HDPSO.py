@@ -9,8 +9,8 @@ import numpy as np
 
 class Penjadwalan:
     """Kelas untuk penjadwalan menggunakan HDPSO"""
-    def __init__(self, bloc=1, bglob=0.5, brand=0.00001, size=5, n_posisi=577):
-        self.populasi = [[]]
+    def __init__(self, bloc=1, bglob=0.5, brand=0.00001, size=5, n_posisi=577, limit=1):
+        self.posisi = [[]]
         self.bglob = bglob
         self.bloc = bloc
         self.brand = brand
@@ -19,14 +19,28 @@ class Penjadwalan:
         self.rrand = []
         self.size = size
         self.n_posisi = n_posisi
+        self.pbest = [[]]
+        self.limit = limit
 
-    def set_populasi(self, pop):
-        """Ganti populasi"""
-        self.populasi = pop
+    def get_limit(self):
+        """Ambil Limit"""
+        return self.limit
 
-    def get_populasi(self):
-        """Ambil populasi"""
-        return self.populasi
+    def set_posisi(self, posisi):
+        """Ganti posisi"""
+        self.posisi = posisi
+
+    def get_posisi(self):
+        """Ambil posisi"""
+        return self.posisi
+
+    def set_pbest(self, pbest):
+        """Ganti Pbest"""
+        self.pbest = pbest
+
+    def get_pbest(self):
+        """Ambil Pbset"""
+        return self.pbest
 
     def get_size(self):
         """Ambil ukuran populasi"""
@@ -36,8 +50,8 @@ class Penjadwalan:
         """Ambil banyak dimensi"""
         return self.n_posisi
 
-    def populasi_awal(self):
-        """Inisialisasi populasi awal"""
+    def posisi_awal(self):
+        """Inisialisasi posisi awal"""
         size = self.get_size()
         n_posisi = self.get_n_posisi()
         partikel = []
@@ -45,32 +59,32 @@ class Penjadwalan:
         while i < size:
             partikel.append(random.sample(range(1, n_posisi + 1), n_posisi))
             i += 1
-        self.set_populasi(np.array(partikel))
+        self.set_posisi(np.array(partikel))
 
     def perbaikan_partikel(self):
         """Memasukkan posisi tiap solusi ke seluruh hari
         dengan memanfaatkan SKS tiap posisi (pengajaran)
         """
-        populasi = self.get_populasi().tolist()
+        posisi = self.get_posisi().tolist()
         size = self.get_size()
         i = 0
         while i < size:
             iline = 0
-            while iline < len(populasi[i]):
-                line = populasi[i][iline]
+            while iline < len(posisi[i]):
+                line = posisi[i][iline]
                 if line < 54:
-                    populasi[i].insert(iline, line)
+                    posisi[i].insert(iline, line)
                     iline += 1
                 elif line < 67:
-                    populasi[i].insert(iline, line)
-                    populasi[i].insert(iline, line)
+                    posisi[i].insert(iline, line)
+                    posisi[i].insert(iline, line)
                     iline += 2
                 elif line < 71:
-                    populasi[i].insert(iline, line)
+                    posisi[i].insert(iline, line)
                     iline += 1
                 iline += 1
             i += 1
-        return np.array(populasi)
+        return np.array(posisi)
 
     def days(self):
         """3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
@@ -82,14 +96,14 @@ class Penjadwalan:
         days[i][1] = Selasa
         days[i][2] = Rabu
         dst."""
-        populasi = self.perbaikan_partikel().tolist()
+        posisi = self.perbaikan_partikel().tolist()
         periode = 12  # Total periode dalam sehari
         ruang = []
         # ruang[:5]    = Ruang 101
         # ruang[5:10]  = Ruang 102
         # ruang[10:15] = Ruang 103
         # dst.
-        for j in populasi:
+        for j in posisi:
             ruang.append([j[i * periode:(i + 1) * periode] for i in range((len(j) + periode - 1) //
                                                                           periode)])
 
@@ -114,11 +128,11 @@ class Penjadwalan:
 
     def c_dosen_n_kelas(self, data):
         """Constraint Dosen / Kelas bentrok. Walaupun sama Jam & Hari."""
-        populasi = self.perbaikan_partikel().tolist()
+        posisi = self.perbaikan_partikel().tolist()
         nilaip_indeksd = []  # [Dosen ke, Pelajaran ke]
         # Dari partikel (P), Nilai yang di bawah 71 ada di indeks ke berapa saja?
         indeksp_bawah71 = []
-        for i in populasi:
+        for i in posisi:
             row = []
             for k in i:
                 if k < 71:
@@ -145,12 +159,12 @@ class Penjadwalan:
             count = 0
             for i, j in enumerate(val):
                 for k in j:
-                    if (populasi[key].index(k) - indeksp_bawah71[key][i]) % 60 == 0:
+                    if (posisi[key].index(k) - indeksp_bawah71[key][i]) % 60 == 0:
                         count += 1
-                    if (populasi[key].index(k) + 1 - indeksp_bawah71[key][i]) % 60 == 0:
+                    if (posisi[key].index(k) + 1 - indeksp_bawah71[key][i]) % 60 == 0:
                         count += 1
                     if 54 <= k < 67:
-                        if (populasi[key].index(k) + 2 - indeksp_bawah71[key][i]) % 60 == 0:
+                        if (posisi[key].index(k) + 2 - indeksp_bawah71[key][i]) % 60 == 0:
                             count += 1
             batasan.append(count)
 
@@ -214,20 +228,20 @@ class Penjadwalan:
 
     def c_tak_tersedia(self):
         """Data pelajaran yang masuk di periode 'tak tersedia'"""
-        populasi = self.perbaikan_partikel().tolist()
+        posisi = self.perbaikan_partikel().tolist()
         # Jam ishoma selain Jumat
-        ishoma = [[j for i, j in enumerate(k) if i % 12 == 6 and i % 60 != 54] for k in populasi]
+        ishoma = [[j for i, j in enumerate(k) if i % 12 == 6 and i % 60 != 54] for k in posisi]
 
         # Jumatan dan setelahnya
-        jumat = [[j for i, j in enumerate(k) if 52 < i % 60 < 60] for k in populasi]
+        jumat = [[j for i, j in enumerate(k) if 52 < i % 60 < 60] for k in posisi]
 
         # Senin & selasa sore
         seninselasa = [[j for i, j in enumerate(k) if i > 246 if 6 < i % 60 < 12 or 18 < i % 60 <
-                        24] for k in populasi]
+                        24] for k in posisi]
 
         # Semua data (termasuk dummy) yang masuk di periode "tak tersedia"
         semua = [list(chain.from_iterable([ishoma[i], jumat[i], seninselasa[i]])) for i in
-                 range(len(populasi))]
+                 range(len(posisi))]
 
         # Data dummy dihapus, sehingga hanya data pelajaran
         pelajaran = [[i for i in j if i < 71] for j in semua]
@@ -284,7 +298,47 @@ class Penjadwalan:
                         c_terpotong[i]) for i in range(size)]
         return fitness
 
+    def update_pbest(self, pbest, fitness_pbest, fitness_posisi):
+        """
+        Update Pbest
+        """
+        posisi = self.get_posisi()
+        kur = [x1 - x2 for (x1, x2) in zip(fitness_pbest, fitness_posisi)]
+        for indeks, isi in enumerate(kur):
+            if isi < 0:
+                pbest[indeks] = posisi[indeks]
+        self.set_pbest(pbest)
+
+    def cari_gbest(self):
+        """
+        Cari partikel terbaik global
+        """
+        pbest = self.get_pbest()
+        idxgbest, value = max(enumerate(self.get_fitness()), key=operator.itemgetter(1)) # pylint: disable=W0612
+        gbest = pbest[idxgbest]
+        self.set_gbest(gbest)
+
+    def update_posisi(self):
+        """Perbaiki posisi"""
+        
+        dloc = 0
+        dglob = 0
+        vrand = 0
+        return 0
+
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
-    JADWAL.populasi_awal()
-    print(JADWAL.fitness())
+
+    JADWAL.posisi_awal()
+    POSISI_AWAL = JADWAL.get_posisi()
+
+    JADWAL.set_pbest(POSISI_AWAL)
+    PBEST_AWAL = JADWAL.get_pbest()
+
+    LIMIT = JADWAL.get_limit()
+    ITERASI = 0
+    while ITERASI < LIMIT:
+        # print(f'Iterasi ke-{ITERASI+1}')
+        ITERASI += 1
+
+    print(POSISI_AWAL)
