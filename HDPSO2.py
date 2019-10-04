@@ -1,5 +1,6 @@
 """Program ini adalah program optimasi penjadwalan mata kuliah di STAIMA Al-Hikam Malang
-menggunakan Hybrid Discrete PSO"""
+menggunakan Hybrid Discrete PSO
+    IMPORT EXCEL"""
 # pylint: disable=cell-var-from-loop, too-many-locals
 
 from itertools import chain
@@ -8,78 +9,58 @@ import random
 import math
 import operator
 import copy
+import pandas as pd
 import numpy as np
 
 class Penjadwalan:
     """Kelas untuk penjadwalan menggunakan HDPSO"""
     def __init__(self):
-        self.bglob = 0.5
-        self.bloc = 1
-        self.brand = 0.00001
-        self.dosen = [[54, 55],   # Dosen D[0] mengajar pelajaran 54 dan 55
-                      [3, 51],    # Dosen D[1] mengajar pelajaran 3 dan 51
-                      [1, 2, 53], # Dosen D[2] mengajar pelajaran 1, 2, dan 53
-                      [66],       # dst.
-                      [67, 68, 69, 70],
-                      [52],
-                      [4, 5, 6, 7],
-                      [15, 16, 17, 18],
-                      [8, 9, 10, 64],
-                      [36, 37, 41, 45],
-                      [28, 29, 30, 46],
-                      [23, 33, 50, 62],
-                      [63],
-                      [21, 22, 24],
-                      [47],
-                      [11, 12, 13, 14],
-                      [58, 59],
-                      [19, 20],
-                      [38, 39],
-                      [34, 35],
-                      [49],
-                      [31, 65],
-                      [25, 26, 27],
-                      [60, 61],
-                      [44, 56, 57],
-                      [42, 48],
-                      [32, 40, 43]]
+        self.bglob = 0
+        self.bloc = 0
+        self.brand = 0
+        self.dosen = [[]]
         self.fitness = []
-        self.ganda = [[67, 69],
-                      [68, 70]]
+        self.ganda = [[]]
         self.gbest = []
-        self.kelas = [[6, 10, 13, 17, 23, 27, 42, 43],   # kelas[0] memiliki pelajaran 6, ..., 43
-                      [45, 46, 47, 48, 49, 50, 51, 52],  # kelas[1] memiliki pelajaran 45, ..., 52
-                      [1, 4, 8, 11, 15, 19, 21, 25, 29], # kelas[2] memiliki pelajaran 1, ..., 29
-                      [2, 5, 9, 12, 16, 20, 22, 26, 30], # dst.
-                      [32, 34, 36, 38, 54, 56, 58, 60, 67, 69],
-                      [33, 35, 37, 39, 55, 57, 59, 61, 68, 70],
-                      [40, 41, 62, 63, 64, 65, 66],
-                      [3, 7, 14, 18, 24, 28, 31, 44, 53]]
-        self.limit = 3
-        self.n_posisi = 577
+        self.kelas = [[]]
+        self.limit = 0
+        self.n_posisi = 0
         self.pbest = [[]]
         # self.prand = [[]]
         self.posisi = [[]]
-        # self.rglob = 0
-        # self.rloc = 0
-        # self.rrand = 0
-        self.size = 5
-        self.sks = [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                     23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
-                     42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 67, 68, 69, 70],
-                    [54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]]
+        self.rglob = 0
+        self.rloc = 0
+        self.rrand = 0
+        self.size = 0
+        self.sks = [[]]
 
-    # def get_bglob(self):
-    #     """Ambil bglob"""
-    #     return self.bglob
+    def set_bglob(self, bglob):
+        """Ganti bglob"""
+        self.bglob = bglob
 
-    # def get_bloc(self):
-    #     """Ambil bloc"""
-    #     return self.bloc
+    def set_bloc(self, bloc):
+        """Ganti bloc"""
+        self.bloc = bloc
 
-    # def get_brand(self):
-    #     """Ambil brand"""
-    #     return self.brand
+    def set_brand(self, brand):
+        """Ganti brand"""
+        self.brand = brand
+
+    def get_bglob(self):
+        """Ambil bglob"""
+        return self.bglob
+
+    def get_bloc(self):
+        """Ambil bloc"""
+        return self.bloc
+
+    def get_brand(self):
+        """Ambil brand"""
+        return self.brand
+
+    def set_dosen(self, dosen):
+        """Ganti Dosen"""
+        self.dosen = dosen
 
     def get_dosen(self):
         """Ambil data dosen"""
@@ -93,6 +74,10 @@ class Penjadwalan:
         """Ambil Fitness"""
         return self.fitness
 
+    def set_ganda(self, ganda):
+        """Ubah Ganda"""
+        self.ganda = ganda
+
     def get_ganda(self):
         """Ambil pelajaran yang 2 kali pertemuan"""
         return self.ganda
@@ -105,13 +90,25 @@ class Penjadwalan:
         """Ambil Gbest"""
         return self.gbest
 
+    def set_kelas(self, kelas):
+        """Ubah Kelas"""
+        self.kelas = kelas
+
     def get_kelas(self):
         """Ambil data kelas"""
         return self.kelas
 
+    def set_limit(self, limit):
+        """Ganti Batas Iterasi"""
+        self.limit = limit
+
     def get_limit(self):
         """Ambil Limit"""
         return self.limit
+
+    def set_n_posisi(self, n_posisi):
+        """Ubah Jumlah Posisi"""
+        self.n_posisi = n_posisi
 
     def get_n_posisi(self):
         """Ambil banyak dimensi"""
@@ -133,25 +130,101 @@ class Penjadwalan:
         """Ambil posisi"""
         return self.posisi
 
-    # def get_rglob(self):
-    #     """Ambil rglob"""
-    #     return self.rglob
+    def set_rglob(self, rglob):
+        """Ganti rglob"""
+        self.rglob = rglob
 
-    # def get_rloc(self):
-    #     """Ambil rloc"""
-    #     return self.rloc
+    def get_rglob(self):
+        """Ambil rglob"""
+        return self.rglob
 
-    # def get_rrand(self):
+    def set_rloc(self, rloc):
+        """Ganti rloc"""
+        self.rloc = rloc
+
+    def get_rloc(self):
+        """Ambil rloc"""
+        return self.rloc
+
+    def set_rrand(self, rrand):
+        """Ganti rrand"""
+        self.rrand = rrand
+
+    def get_rrand(self):
         """Ambil rrand"""
         return self.rrand
+
+    def set_size(self, size):
+        """Ganti ukuran populasi"""
+        self.size = size
 
     def get_size(self):
         """Ambil ukuran populasi"""
         return self.size
 
+    def set_sks(self, sks):
+        """Ganti sks masing" pelajaran"""
+        self.sks = sks
+
     def get_sks(self):
         """Ambil sks masing" pelajaran"""
         return self.sks
+
+    def impor_data(self):
+        """Impor data sumber"""
+        df_pelajaran = pd.read_excel('data.xlsx', 'Pelajaran')
+        df_hari = pd.read_excel('data.xlsx', 'Hari')
+        df_periode = pd.read_excel('data.xlsx', 'Periode')
+        df_ruangan = pd.read_excel('data.xlsx', 'Ruangan')
+        df_parameter = pd.read_excel('data.xlsx', 'Parameter')
+
+        # Dataframe Pelajaran yang SKS eksklusifnya telah dibagi
+        df_tanpa_ganda = df_pelajaran.loc[(df_pelajaran['SKS'] < 4)]
+        df_ganda = df_pelajaran.loc[(df_pelajaran['SKS'] > 3)]
+        df_ganda = df_ganda.append(df_ganda).reset_index(drop=True)
+        df_ganda['No.'] = df_ganda.index + df_tanpa_ganda['No.'].count() + 1
+        df_ganda['SKS'] = df_ganda['SKS'] // 2
+        df_dgn_ganda = df_tanpa_ganda.append(df_ganda).reset_index(drop=True)
+
+        def dosen_kelas(kolom):
+            """Data Dosen dan Kelas"""
+            dosen = []
+            dos = []
+            dfr = df_dgn_ganda.groupby([kolom, 'No.'])
+            kol = 2 if kolom == "SKS" else 3 if kolom == "Dosen" else 4
+            idx = df_dgn_ganda.sort_values(kolom).iloc[0, kol]
+            for index in dfr.groups.keys():
+                if index[0] == idx:
+                    dos.append(index[1])
+                    if index[1] == df_dgn_ganda.sort_values(kolom).iloc[-1, 0]:
+                        dosen.append(dos)
+                else:
+                    dosen.append(dos)
+                    dos = [index[1]]
+                    idx = index[0]
+            return dosen
+
+        def split_list(a_list):
+            """Membagi list jadi 2 persis (setengah)"""
+            half = len(a_list)//2
+            return [a_list[:half], a_list[half:]]
+
+        ganda = split_list(df_ganda['No.'].tolist())
+        ganda = np.transpose(ganda).tolist()
+
+        self.set_dosen(dosen_kelas("Dosen"))
+        self.set_ganda(ganda)
+        self.set_kelas(dosen_kelas("Kelas"))
+        self.set_sks(dosen_kelas("SKS"))
+        self.set_limit(df_parameter.iloc[0]['Limit'])
+        self.set_size(df_parameter.iloc[0]['Size'])
+        self.set_bloc(df_parameter.iloc[0]['Bloc'])
+        self.set_bglob(df_parameter.iloc[0]['Bglob'])
+        self.set_brand(df_parameter.iloc[0]['Brand'])
+        self.set_n_posisi(df_pelajaran['No.'].count() +
+                          df_pelajaran.loc[(df_pelajaran['SKS'] > 3)]['SKS'].count() +
+                          df_hari['No.'].count() * df_periode['No.'].count() *
+                          df_ruangan['No.'].count() - df_pelajaran['SKS'].sum())
 
     def posisi_awal(self):
         """Inisialisasi posisi awal"""
@@ -166,7 +239,7 @@ class Penjadwalan:
 
     def hitung_fitness(self, posisi):
         """Menghitung fitness"""
-        size = self.get_size()
+        size = int(self.get_size())
         dosen = self.get_dosen()
         kelas = self.get_kelas()
         sks = self.get_sks()
@@ -181,18 +254,16 @@ class Penjadwalan:
                 iline = 0
                 while iline < len(posisi[i]):
                     line = posisi[i][iline]
-                    if line < 54:
+                    if line in sks[0]:
                         posisi[i].insert(iline, line)
                         iline += 1
-                    elif line < 67:
+                    elif line in sks[1]:
                         posisi[i].insert(iline, line)
                         posisi[i].insert(iline, line)
                         iline += 2
-                    elif line < 71:
-                        posisi[i].insert(iline, line)
-                        iline += 1
                     iline += 1
                 i += 1
+
             return np.array(posisi)
 
         posisi_baik = perbaikan_partikel()
@@ -279,7 +350,7 @@ class Penjadwalan:
 
             return batasan
 
-        def c_ganda(self):
+        def c_ganda():
             """Bentrok pelajaran ganda pada hari yang sama"""
             days = hari()
 
@@ -366,7 +437,8 @@ class Penjadwalan:
         c_terpotong = c_terpotong(kelas)
 
         fitness = [1 / (1 + c_dosen[i] + c_kelas[i] + c_ganda[i] + c_tak_tersedia[i] +
-                        c_terpotong[i]) for i in range(size)]
+                        c_terpotong[i]) 
+                        for i in range(size)]
 
         self.set_fitness(fitness)
 
@@ -393,12 +465,13 @@ class Penjadwalan:
 
     def update_posisi(self, pos, pbest, gbest):
         """Update Posisi (posisi sekarang, pbest, gbest)"""
-        rloc = 0
-        bloc = 0
-        rglob = 0
-        bglob = 0
-        rrand = 0
-        brand = 0
+        rloc = self.get_rloc()
+        bloc = self.get_bloc()
+        rglob = self.get_rglob()
+        bglob = self.get_bglob()
+        rrand = self.get_rrand()
+        brand = self.get_brand()
+        n_posisi = self.get_n_posisi()
 
         def difference(pos1, pos2):
             """Algoritma DIFFERENCE (SUBSTRACTIONS) = position minum position"""
@@ -440,21 +513,20 @@ class Penjadwalan:
 
         posa = []
         for i, j in enumerate(pos):
+            prand = random.sample(range(1, n_posisi + 1), n_posisi)
+
             ## DLOC
-            # pbest = xdua[:]
             difloc = difference(pbest[i], j)
             mulloc = multiplication(difloc, rloc, bloc)
             dloc = move(j, mulloc)
 
             ## DGLOB
-            # gbest = E[:]
             difglob = difference(gbest, j)
             muloglob = multiplication(difglob, rglob, bglob)
             dglob = move(j, muloglob)
 
             ## VRAND
-            # prand = G[:]
-            difrand = difference(j, j)
+            difrand = difference(prand, j)
             vrand = multiplication(difrand, rrand, brand)
 
             ## X
@@ -468,15 +540,20 @@ class Penjadwalan:
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
 
+    JADWAL.impor_data()
     JADWAL.posisi_awal()
     # DATA = JADWAL.perbaikan_partikel()
 
     POSISI = JADWAL.get_posisi() # Posisi Awal
     JADWAL.set_pbest(POSISI) # Pbest Awal = Posisi Awal
 
+    JADWAL.set_rloc(random.random())
+    JADWAL.set_rglob(random.random())
+    JADWAL.set_rrand(random.random())
+
     LIMIT = JADWAL.get_limit()
     ITERASI = 0
-    while ITERASI < 2:
+    while ITERASI < LIMIT:
         print(f'Iterasi ke-{ITERASI+1}\n')
 
         PBEST = JADWAL.get_pbest()

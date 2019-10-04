@@ -4,7 +4,7 @@ menggunakan Hybrid Discrete PSO"""
 
 from itertools import chain
 from collections import Counter
-import random
+# import random
 import math
 import operator
 import copy
@@ -49,7 +49,7 @@ class Penjadwalan:
         self.size = 3
         self.sks = [[1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 21, 22, 24, 25, 26,
                      27, 28, 29, 30, 32, 33, 34, 35], # sks[0] = pelajaran yang memiliki 2 sks
-                    [3, 18, 19, 20, 23, 31]]          # sks[0] = pelajaran yang memiliki 3 sks
+                    [3, 18, 19, 20, 23, 31]]          # sks[1] = pelajaran yang memiliki 3 sks
 
     def set_bglob(self, bglob):
         """Ubah bglob"""
@@ -388,7 +388,8 @@ class Penjadwalan:
             jumat = [[j for i, j in enumerate(k) if 28 < i % 36 < 36] for k in posisi_baik]
 
             # Senin sore
-            senin = [[j for i, j in enumerate(k) if i > 114 if 6 < i % 36 < 12] for k in posisi_baik]
+            senin = [[j for i, j in enumerate(k) if i > 114 if 6 < i % 36 < 12] for k in
+                     posisi_baik]
 
             # Semua data (termasuk dummy) yang masuk di periode "tak tersedia"
             semua = [list(chain.from_iterable([ishoma[i], jumat[i], senin[i]])) for i in
@@ -428,8 +429,6 @@ class Penjadwalan:
         """
         Cari partikel terbaik global
         """
-        # pbest = self.get_pbest()
-        # fitness = self.get_fitness()
         idxgbest, value = max(enumerate(fitness), key=operator.itemgetter(1)) # pylint: disable=W0612
         gbest = pbest[idxgbest]
         self.set_gbest(gbest)
