@@ -20,6 +20,7 @@ class Penjadwalan:
         self.brand = 0
         self.dosen = [[]]
         self.fitness = []
+        self.fitness_gbest = 0
         self.ganda = [[]]
         self.gbest = []
         self.kelas = [[]]
@@ -73,6 +74,14 @@ class Penjadwalan:
     def get_fitness(self):
         """Ambil Fitness"""
         return self.fitness
+
+    def set_fitness_gbest(self, fitness_gbest):
+        """Ubah Fitness Gbest"""
+        self.fitness_gbest = fitness_gbest
+
+    def get_fitness_gbest(self):
+        """Ambil Fitness Gbest"""
+        return self.fitness_gbest
 
     def set_ganda(self, ganda):
         """Ubah Ganda"""
@@ -437,8 +446,8 @@ class Penjadwalan:
         c_terpotong = c_terpotong(kelas)
 
         fitness = [1 / (1 + c_dosen[i] + c_kelas[i] + c_ganda[i] + c_tak_tersedia[i] +
-                        c_terpotong[i]) 
-                        for i in range(size)]
+                        c_terpotong[i])
+                   for i in range(size)]
 
         self.set_fitness(fitness)
 
@@ -453,15 +462,14 @@ class Penjadwalan:
                 pbest[indeks] = posisi[indeks]
         self.set_pbest(pbest)
 
-    def cari_gbest(self):
+    def cari_gbest(self, pbest, fitness):
         """
         Cari partikel terbaik global
         """
-        pbest = self.get_pbest()
-        fitness = self.get_fitness()
         idxgbest, value = max(enumerate(fitness), key=operator.itemgetter(1)) # pylint: disable=W0612
         gbest = pbest[idxgbest]
         self.set_gbest(gbest)
+        self.set_fitness_gbest(value)
 
     def update_posisi(self, pos, pbest, gbest):
         """Update Posisi (posisi sekarang, pbest, gbest)"""
@@ -475,11 +483,11 @@ class Penjadwalan:
 
         def difference(pos1, pos2):
             """Algoritma DIFFERENCE (SUBSTRACTIONS) = position minum position"""
-            temp = pos1.tolist()[:]
+            temp = pos2[:].tolist()
             vel = []
-            for key, j in enumerate(temp):
-                if j != pos2[key]:
-                    tukar1, tukar2 = key, temp.index(pos2[key])
+            for key, j in enumerate(pos1):
+                if j != temp[key]:
+                    tukar1, tukar2 = key, temp.index(j)
                     vel.append((tukar1 + 1, tukar2 + 1))
                     temp[tukar1], temp[tukar2] = temp[tukar2], temp[tukar1]
             return vel
@@ -533,19 +541,29 @@ class Penjadwalan:
             difx = difference(dloc, dglob)
             mulx = multiplication(difx, csatu=0.5)
             movx = move(dglob, mulx)
-            posa.append(move(movx, vrand))
+            posx = move(movx, vrand)
+            posa.append(posx)
 
-        self.set_posisi(posa)
+        self.set_posisi(np.array(posa))
 
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
 
     JADWAL.impor_data()
-    JADWAL.posisi_awal()
-    # DATA = JADWAL.perbaikan_partikel()
-
+    JADWAL.posisi_awal() # Inisialisasi Posisi
     POSISI = JADWAL.get_posisi() # Posisi Awal
-    JADWAL.set_pbest(POSISI) # Pbest Awal = Posisi Awal
+
+    JADWAL.hitung_fitness(POSISI)
+    FITNESS_POSISI = JADWAL.get_fitness()
+
+    JADWAL.set_pbest(POSISI) # Inisialisasi Pbest (Pbest Awal = Posisi Awal)
+    PBEST = JADWAL.get_pbest()
+
+    JADWAL.hitung_fitness(PBEST)
+    FITNESS_PBEST = JADWAL.get_fitness()
+
+    JADWAL.cari_gbest(PBEST, FITNESS_PBEST)
+    GBEST = JADWAL.get_gbest()
 
     JADWAL.set_rloc(random.random())
     JADWAL.set_rglob(random.random())
@@ -555,31 +573,24 @@ if __name__ == "__main__":
     ITERASI = 0
     while ITERASI < LIMIT:
         print(f'Iterasi ke-{ITERASI+1}\n')
+        JADWAL.update_posisi(POSISI, PBEST, GBEST)
+        POSISI = JADWAL.get_posisi()
 
+        JADWAL.hitung_fitness(POSISI)
+        FITNESS_POSISI = JADWAL.get_fitness()
+
+        JADWAL.update_pbest(PBEST, FITNESS_PBEST, FITNESS_POSISI)
         PBEST = JADWAL.get_pbest()
 
         JADWAL.hitung_fitness(PBEST)
         FITNESS_PBEST = JADWAL.get_fitness()
 
-        JADWAL.hitung_fitness(POSISI)
-        FITNESS_POSISI = JADWAL.get_fitness()
-
-        print(FITNESS_PBEST)
-        JADWAL.update_pbest(PBEST, FITNESS_PBEST, FITNESS_POSISI)
-        print(FITNESS_POSISI)
-
-        # JADWAL.hitung_fitness()
-        FITNESS = JADWAL.get_fitness()
-        JADWAL.cari_gbest()
+        JADWAL.cari_gbest(PBEST, FITNESS_PBEST)
         GBEST = JADWAL.get_gbest()
-        # POSISI = JADWAL.get_posisi() # Posisi Awal
+        
+        FITNESS_GBEST = JADWAL.get_fitness_gbest()
+        print(FITNESS_GBEST)
 
-        # print(f'Posisi  :\n{POSISI}\n')
-        # print(f'FITNESS :\n{FITNESS}\n')
-        # print(f'PBEST :\n{PBEST}\n')
+        POSISI = JADWAL.get_posisi()
 
-        JADWAL.update_posisi(POSISI, PBEST, GBEST)
         ITERASI += 1
-    # print(f'GBEST :\n{GBEST}')
-
-    # print(PBEST)

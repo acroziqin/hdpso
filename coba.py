@@ -35,7 +35,13 @@ def split_list(a_list):
 A = split_list(df_ganda['No.'].tolist())
 A = np.transpose(A).tolist()
 
-print(random.sample(range(1, 10 + 1), 10))
+x = "0"
+if isinstance(x, int):
+    print(True)
+else:
+    print(False)
+
+# print(rd.sample(range(1, 10 + 1), 10))
 # df = pd.DataFrame([[1, 2], [3, 4]], columns=list('AB'))
 # df2 = pd.DataFrame([[5, 6], [7, 8]], columns=list('AB'))
 # df = df.append(df2)
