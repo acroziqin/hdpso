@@ -9,8 +9,9 @@ import random
 import math
 import operator
 import copy
-import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 class Penjadwalan:
     """Kelas untuk penjadwalan menggunakan HDPSO"""
@@ -23,11 +24,12 @@ class Penjadwalan:
         self.fitness_gbest = 0
         self.ganda = [[]]
         self.gbest = []
+        self.hari = 0
         self.kelas = [[]]
         self.limit = 0
         self.n_posisi = 0
         self.pbest = [[]]
-        # self.prand = [[]]
+        self.periode = 0
         self.posisi = [[]]
         self.rglob = 0
         self.rloc = 0
@@ -99,7 +101,15 @@ class Penjadwalan:
         """Ambil Gbest"""
         return self.gbest
 
-    def set_kelas(self, kelas):
+    def set_hari(self, hari):
+        """Ubah Hari"""
+        self.hari = hari
+
+    def get_hari(self):
+        """Ambil Hari"""
+        return self.hari
+
+    def set_kelas(self, kelas): 
         """Ubah Kelas"""
         self.kelas = kelas
 
@@ -130,6 +140,14 @@ class Penjadwalan:
     def get_pbest(self):
         """Ambil Pbset"""
         return self.pbest
+
+    def set_periode(self, periode):
+        """Ganti Periode"""
+        self.periode = periode
+
+    def get_periode(self):
+        """Ambil Periode"""
+        return self.periode
 
     def set_posisi(self, posisi):
         """Ganti posisi"""
@@ -221,19 +239,21 @@ class Penjadwalan:
         ganda = split_list(df_ganda['No.'].tolist())
         ganda = np.transpose(ganda).tolist()
 
+        self.set_bglob(df_parameter.iloc[0]['Bglob'])
+        self.set_bloc(df_parameter.iloc[0]['Bloc'])
+        self.set_brand(df_parameter.iloc[0]['Brand'])
         self.set_dosen(dosen_kelas("Dosen"))
         self.set_ganda(ganda)
+        self.set_hari(df_hari['No.'].count())
         self.set_kelas(dosen_kelas("Kelas"))
-        self.set_sks(dosen_kelas("SKS"))
         self.set_limit(df_parameter.iloc[0]['Limit'])
-        self.set_size(df_parameter.iloc[0]['Size'])
-        self.set_bloc(df_parameter.iloc[0]['Bloc'])
-        self.set_bglob(df_parameter.iloc[0]['Bglob'])
-        self.set_brand(df_parameter.iloc[0]['Brand'])
         self.set_n_posisi(df_pelajaran['No.'].count() +
                           df_pelajaran.loc[(df_pelajaran['SKS'] > 3)]['SKS'].count() +
                           df_hari['No.'].count() * df_periode['No.'].count() *
                           df_ruangan['No.'].count() - df_pelajaran['SKS'].sum())
+        self.set_periode(df_periode['No.'].count())
+        self.set_size(df_parameter.iloc[0]['Size'])
+        self.set_sks(dosen_kelas("SKS"))
 
     def posisi_awal(self):
         """Inisialisasi posisi awal"""
@@ -287,7 +307,7 @@ class Penjadwalan:
             days[i][1] = Selasa
             days[i][2] = Rabu
             dst."""
-            periode = 12  # Total periode dalam sehari
+            periode = self.get_periode()  # Total periode dalam sehari
             ruang = []
             # ruang[:5]    = Ruang 101
             # ruang[5:10]  = Ruang 102
@@ -297,7 +317,7 @@ class Penjadwalan:
                 ruang.append([j[i * periode:(i + 1) * periode] for i in range((len(j) + periode - 1
                                                                               ) // periode)])
 
-            nhari = 5  # Jumlah hari aktif dalam seminggu
+            nhari = self.get_hari()  # Jumlah hari aktif dalam seminggu
             days = []  # 3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
             # days[0] = Partikel 1
             # days[1] = Partikel 2
@@ -393,10 +413,10 @@ class Penjadwalan:
 
             return batasan3
 
-        def c_terpotong(data):
+        def c_terpotong():
             """Pelajaran yang waktunya terpotong (berada di 2 hari)"""
             days = hari()
-            pelajaran = list(chain.from_iterable(data))
+            pelajaran = list(chain.from_iterable(kelas)) # 
             pelajaranhari = [] # pelajaran[i][j] ada di hari apa saja?
             for valdays in days:
                 k = []
@@ -443,11 +463,10 @@ class Penjadwalan:
         c_kelas = c_dosen_n_kelas(kelas)
         c_ganda = c_ganda()
         c_tak_tersedia = c_tak_tersedia()
-        c_terpotong = c_terpotong(kelas)
+        c_terpotong = c_terpotong()
 
         fitness = [1 / (1 + c_dosen[i] + c_kelas[i] + c_ganda[i] + c_tak_tersedia[i] +
-                        c_terpotong[i])
-                   for i in range(size)]
+                        c_terpotong[i]) for i in range(size)]
 
         self.set_fitness(fitness)
 
@@ -542,9 +561,29 @@ class Penjadwalan:
             mulx = multiplication(difx, csatu=0.5)
             movx = move(dglob, mulx)
             posx = move(movx, vrand)
+            
             posa.append(posx)
 
         self.set_posisi(np.array(posa))
+
+    def pengujian_parameter(self):
+        """Pengujian Parameter HDPSO"""
+        return 0
+
+    def pengujian_iterasi(self, limit, fitness):
+        """Pengujian Jumlah Iterasi"""
+
+        plt.title('Grafik Konvergensi')
+        plt.plot(np.arange(limit), fitness)
+        plt.xlabel('Jumlah Iterasi')
+        plt.ylabel('Fitness Terbaik')
+        plt.grid(True)
+        plt.axis([0, limit, fitness[0], fitness[-1]])
+        plt.show()
+
+    def pengujian_partikel(self):
+        """Pengujian Jumlah Partikel"""
+        return 0
 
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
@@ -554,7 +593,6 @@ if __name__ == "__main__":
     POSISI = JADWAL.get_posisi() # Posisi Awal
 
     JADWAL.hitung_fitness(POSISI)
-    FITNESS_POSISI = JADWAL.get_fitness()
 
     JADWAL.set_pbest(POSISI) # Inisialisasi Pbest (Pbest Awal = Posisi Awal)
     PBEST = JADWAL.get_pbest()
@@ -571,8 +609,9 @@ if __name__ == "__main__":
 
     LIMIT = JADWAL.get_limit()
     ITERASI = 0
+    FITNESS_TERBAIK = []
     while ITERASI < LIMIT:
-        print(f'Iterasi ke-{ITERASI+1}\n')
+        # print(f'Iterasi ke-{ITERASI+1}')
         JADWAL.update_posisi(POSISI, PBEST, GBEST)
         POSISI = JADWAL.get_posisi()
 
@@ -580,17 +619,34 @@ if __name__ == "__main__":
         FITNESS_POSISI = JADWAL.get_fitness()
 
         JADWAL.update_pbest(PBEST, FITNESS_PBEST, FITNESS_POSISI)
-        PBEST = JADWAL.get_pbest()
+        PBEST = JADWAL.get_pbest()  
 
         JADWAL.hitung_fitness(PBEST)
         FITNESS_PBEST = JADWAL.get_fitness()
 
         JADWAL.cari_gbest(PBEST, FITNESS_PBEST)
         GBEST = JADWAL.get_gbest()
-        
+
         FITNESS_GBEST = JADWAL.get_fitness_gbest()
-        print(FITNESS_GBEST)
 
+        # print(f'FITNESS GBEST : {FITNESS_GBEST}\n')
+        FITNESS_TERBAIK.append(FITNESS_GBEST)
         POSISI = JADWAL.get_posisi()
-
         ITERASI += 1
+
+    print(f'Size : {JADWAL.get_size()}\n')
+    print(f'Limit : {LIMIT}\n')
+    print(f'Bloc : {JADWAL.get_bloc()}\n')
+    print(f'Bglob : {JADWAL.get_bglob()}\n')
+    print(f'Brand : {JADWAL.get_brand()}\n')
+    print(f'FITNESS TERBAIK : {FITNESS_TERBAIK[-1]}\n')
+
+    # plt.title('Grafik Konvergensi')
+    # plt.plot(np.arange(LIMIT), FITNESS_TERBAIK)
+    # plt.xlabel('Jumlah Iterasi')
+    # plt.ylabel('Fitness Terbaik')
+    # plt.grid(True)
+    # plt.axis([0, LIMIT, FITNESS_TERBAIK[0], FITNESS_TERBAIK[-1]])
+    # plt.show()
+
+    # JADWAL.pengujian_iterasi(LIMIT, FITNESS_TERBAIK)

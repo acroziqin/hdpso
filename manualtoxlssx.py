@@ -29,6 +29,7 @@ class Penjadwalan:
                       [23, 31],
                       [32, 33, 34, 35]]
         self.fitness = []
+        self.fitness_gbest = 0
         self.ganda = [[32, 34], # pelajaran 2 kali pertemuan
                       [33, 35]]
         self.gbest = []
@@ -86,6 +87,14 @@ class Penjadwalan:
     def get_fitness(self):
         """Ambil Fitness"""
         return self.fitness
+
+    def set_fitness_gbest(self, fitness_gbest):
+        """Ubah Fitness Gbest"""
+        self.fitness_gbest = fitness_gbest
+
+    def get_fitness_gbest(self):
+        """Ambil Fitness Gbest"""
+        return self.fitness_gbest
 
     def get_ganda(self):
         """Ambil pelajaran ganda"""
@@ -203,18 +212,16 @@ class Penjadwalan:
 
         self.set_posisi(np.array(partikel))
 
-    def hitung_fitness(self, posisi):
-        """Menghitung fitness"""
+    def perbaikan_partikel(self, posisi):
+        """Memasukkan posisi tiap solusi ke seluruh hari
+        dengan memanfaatkan SKS tiap posisi (pengajaran)
+        """
         size = self.get_size()
-        dosen = self.get_dosen()
-        kelas = self.get_kelas()
         sks = self.get_sks()
-        posisi = posisi.tolist()
+        posisi = np.array(posisi)
 
-        def perbaikan_partikel():
-            """Memasukkan posisi tiap solusi ke seluruh hari
-            dengan memanfaatkan SKS tiap posisi (pengajaran)
-            """
+        if len(posisi.shape) > 1:
+            posisi = posisi.tolist()
             i = 0
             while i < size:
                 iline = 0
@@ -229,10 +236,31 @@ class Penjadwalan:
                         iline += 2
                     iline += 1
                 i += 1
+        else:
+            posisi = posisi.tolist()
+            iline = 0
+            while iline < len(posisi):
+                line = posisi[iline]
+                if line in sks[0]:
+                    posisi.insert(iline, line)
+                    iline += 1
+                elif line in sks[1]:
+                    posisi.insert(iline, line)
+                    posisi.insert(iline, line)
+                    iline += 2
+                iline += 1
 
-            return np.array(posisi)
+        return np.array(posisi)
 
-        posisi_baik = perbaikan_partikel()
+    def hitung_fitness(self, posisi):
+        """Menghitung fitness"""
+        size = self.get_size()
+        dosen = self.get_dosen()
+        kelas = self.get_kelas()
+        sks = self.get_sks()
+
+        posisi_baik = self.perbaikan_partikel(posisi)
+        posisi = posisi_baik.tolist()
 
         def hari():
             """3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
@@ -435,6 +463,7 @@ class Penjadwalan:
         idxgbest, value = max(enumerate(fitness), key=operator.itemgetter(1)) # pylint: disable=W0612
         gbest = pbest[idxgbest]
         self.set_gbest(gbest)
+        self.set_fitness_gbest(value)
 
     def update_posisi(self, pos, pbest, gbest, prand, ite):
         """Update Posisi (posisi sekarang, pbest, gbest)"""
@@ -565,6 +594,7 @@ if __name__ == "__main__":
     # LIMIT = JADWAL.get_limit()
     LIMIT = 1
     ITERASI = 0
+    FITNESS_TERBAIK = []
     while ITERASI <= LIMIT:
         # print(f'Iterasi ke-{ITERASI+1}\n')
         # if ITERASI == 0:
@@ -607,8 +637,15 @@ if __name__ == "__main__":
         # JADWAL.set_pbest(POSISI)
         # print(JADWAL.get_posisi())
         # print([item for item, count in C4jj7Ma:VFtk_vVCounter(PRAND).items() if count > 1])
+        FITNESS_GBEST = JADWAL.get_fitness_gbest()
+        FITNESS_TERBAIK.append(FITNESS_GBEST)
         ITERASI += 1
     # print(f'GBEST :\n{GBEST}')
-    print(f'GBEST :\n{GBEST}\n')
+    GBEST_BAIK = JADWAL.perbaikan_partikel(GBEST.tolist())
+    # print(len(GBEST.shape))
+    # print(len(POSISI.shape))
+    print(f'GBEST_BAIK :\n{GBEST_BAIK}\n')
+    print(f'FITNESS_TERBAIK :\n{FITNESS_TERBAIK[-1]}')
+
 
     # print(PBEST)
