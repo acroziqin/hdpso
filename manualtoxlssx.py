@@ -529,11 +529,14 @@ class Penjadwalan:
 
     def decoding(self, posisi):
         """Decoding GBEST_BAIK"""
-        size = self.get_size()
         dosen = self.get_dosen()
         kelas = self.get_kelas()
         sks = self.get_sks()
         posisi = posisi.tolist()
+        nperiode = 12
+        nhari = 3
+        nruangan = 6
+        npelajaran = 35
 
         iline = 0
         while iline < len(posisi):
@@ -548,26 +551,34 @@ class Penjadwalan:
             iline += 1
 
         ### HARI ###
-        periode = 12  # Total periode dalam sehari
-        # ruang[:5]    = Ruang 101
-        # ruang[5:10]  = Ruang 102
-        # ruang[10:15] = Ruang 103
-        # dst.
-        ruang = [posisi[i * periode:(i + 1) * periode] for i in range((len(posisi) + periode -
-                                                                       1) // periode)]
-        nhari = 3  # Jumlah hari aktif dalam seminggu
-        days = []  # 2 Dimensi (Hari x Posisi/Partikel/Hari)
-        # days[0] = Senin
-        # days[1] = Selassa
-        # days[2] = Rabu
-        # dst.
-        for j in range(nhari):
-            day = [ruang[i * nhari + j] for i in range(len(ruang) // nhari)]
-            days.append(list(chain.from_iterable(day)))
+        def hari(data_pos):
+            """2 Dimensi (Hari x Posisi/Partikel/Hari)
+            days[0] = Senin
+            days[1] = Selasa
+            days[2] = Rabu
+            dst."""
+            # ruang[:5]    = Ruang 101
+            # ruang[5:10]  = Ruang 102
+            # ruang[10:15] = Ruang 103
+            # dst.
+            ruang = [data_pos[i * nperiode:(i + 1) * nperiode] for i in range((len(data_pos) + nperiode
+                                                                             - 1) // nperiode)]
+            nhari = 3  # Jumlah hari aktif dalam seminggu
+            days = []  # 2 Dimensi (Hari x Posisi/Partikel/Hari)
+            # days[0] = Senin
+            # days[1] = Selassa
+            # days[2] = Rabu
+            # dst.
+            for j in range(nhari):
+                day = [ruang[i * nhari + j] for i in range(len(ruang) // nhari)]
+                days.append(list(chain.from_iterable(day)))
 
-        ganda = self.get_ganda()
+            return days
+
+        days = hari(posisi)
 
         ### C_GANDA ###
+        ganda = self.get_ganda()
         gandahari = []  # ganda[i][j] ada di hari apa saja?
         for j in ganda:
             temp2 = []
@@ -601,16 +612,12 @@ class Penjadwalan:
 
         ### C_TAK_TERSEDIA ###
         ishoma = [j for i, j in enumerate(posisi) if i % 12 == 6 and i % 36 != 30]
-
         # Jumatan dan setelahnya
         jumat = [j for i, j in enumerate(posisi) if 28 < i % 36 < 36]
-
         # Senin sore
         senin = [j for i, j in enumerate(posisi) if i > 114 if 6 < i % 36 < 12]
-
         # Semua data (termasuk dummy) yang masuk di periode "tak tersedia"
         semua = list(chain.from_iterable([ishoma, jumat, senin]))
-
         # Data dummy dihapus, sehingga hanya data pelajaran
         c_tak_tersedia = list(set([i for i in semua if i < 36]))
 
@@ -637,7 +644,6 @@ class Penjadwalan:
                 del temp[j[1]]
                 nilaid_selainp.append(temp)  # Masukkan C ke row
 
-            nperiode = 12
             mod = nperiode * nhari
             c_dosen_kelas = []  # Batasan pertama atau kedua: bentrok dosen atau kelas
             for i, j in enumerate(nilaid_selainp):
@@ -687,8 +693,44 @@ class Penjadwalan:
                             if temp2:
                                 constraints[i].remove(k)
 
+        all_constraints = list(chain.from_iterable(constraints))
 
-        return harisama
+        for i in all_constraints:
+            if isinstance(i, list):
+                for key, val in enumerate(i):
+                    if key > 0:
+                        all_constraints.append(val)
+                all_constraints.remove(i)
+
+        pos_tabel = posisi[:]
+        for i in all_constraints:
+            for key, val in enumerate(pos_tabel):
+                if val == i:
+                    pos_tabel[key] = 0
+
+        pelajaran = list(range(1, npelajaran + 1))
+
+        halo = hari(pos_tabel)
+        mtx_tabel = []
+        for key, val in enumerate(halo):
+            temp = []
+            for j in range(nruangan):
+                temp2 = {}
+                temp2[j] = val[j * nperiode : (j + 1) * nperiode]
+                if any(elem in temp2[j]  for elem in pelajaran):
+                    temp.append(temp2)
+            mtx_tabel.append(temp)
+
+        for i in mtx_tabel:
+            for j in i:
+                for val in j.values():
+                    pot = val[:len(val)-1]
+                    ong = val[1:]
+                    for key, k in enumerate(pot):
+                        if k != 0 and k == ong[key]:
+                            val.remove(k)
+
+        return mtx_tabel
 
 
 if __name__ == "__main__":
