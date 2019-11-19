@@ -212,16 +212,18 @@ class Penjadwalan:
 
         self.set_posisi(np.array(partikel))
 
-    def perbaikan_partikel(self, posisi):
-        """Memasukkan posisi tiap solusi ke seluruh hari
-        dengan memanfaatkan SKS tiap posisi (pengajaran)
-        """
+    def hitung_fitness(self, posisi):
+        """Menghitung fitness"""
         size = self.get_size()
+        dosen = self.get_dosen()
+        kelas = self.get_kelas()
         sks = self.get_sks()
-        posisi = np.array(posisi)
+        posisi = posisi.tolist()
 
-        if len(posisi.shape) > 1:
-            posisi = posisi.tolist()
+        def perbaikan_partikel(posisi):
+            """Memasukkan posisi tiap solusi ke seluruh hari
+            dengan memanfaatkan SKS tiap posisi (pengajaran)
+            """
             i = 0
             while i < size:
                 iline = 0
@@ -236,31 +238,10 @@ class Penjadwalan:
                         iline += 2
                     iline += 1
                 i += 1
-        else:
-            posisi = posisi.tolist()
-            iline = 0
-            while iline < len(posisi):
-                line = posisi[iline]
-                if line in sks[0]:
-                    posisi.insert(iline, line)
-                    iline += 1
-                elif line in sks[1]:
-                    posisi.insert(iline, line)
-                    posisi.insert(iline, line)
-                    iline += 2
-                iline += 1
 
-        return np.array(posisi)
+            return np.array(posisi)
 
-    def hitung_fitness(self, posisi):
-        """Menghitung fitness"""
-        size = self.get_size()
-        dosen = self.get_dosen()
-        kelas = self.get_kelas()
-        sks = self.get_sks()
-
-        posisi_baik = self.perbaikan_partikel(posisi)
-        posisi = posisi_baik.tolist()
+        posisi_baik = perbaikan_partikel(posisi)
 
         def hari():
             """3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
@@ -281,7 +262,6 @@ class Penjadwalan:
             for j in posisi_baik:
                 ruang.append([j[i * periode:(i + 1) * periode] for i in range((len(j) + periode - 1
                                                                               ) // periode)])
-
             nhari = 3  # Jumlah hari aktif dalam seminggu
             days = []  # 3 Dimensi (Partikel x Hari x Posisi/Partikel/Hari)
             # days[0] = Partikel 1
@@ -298,10 +278,9 @@ class Penjadwalan:
                     day = [k[i * nhari + j] for i in range(len(k) // nhari)]
                     hari.append(list(chain.from_iterable(day)))
                 days.append(hari)
-            dino = np.array(days)
-            world = dino.shape
+            # dino = np.array(days)
             halo = np.transpose(days, (1, 0, 2))
-            dino = dino.tolist()
+            # dino = dino.tolist()
             return halo
 
         def c_dosen_n_kelas(data):
@@ -434,11 +413,11 @@ class Penjadwalan:
 
             return batasan5
 
-        c_dosen = c_dosen_n_kelas(dosen)
-        c_kelas = c_dosen_n_kelas(kelas)
-        c_ganda = c_ganda()
-        c_terpotong = c_terpotong()
-        c_tak_tersedia = c_tak_tersedia()
+        c_dosen = c_dosen_n_kelas(dosen) # C1
+        c_kelas = c_dosen_n_kelas(kelas) # C2
+        c_ganda = c_ganda() # C3
+        c_terpotong = c_terpotong() # C4
+        c_tak_tersedia = c_tak_tersedia() # C5
 
         fitness = [1 / (1 + c_dosen[i] + c_kelas[i] + c_ganda[i] + c_terpotong[i] +
                         c_tak_tersedia[i]) for i in range(size)]
@@ -548,6 +527,170 @@ class Penjadwalan:
 
         self.set_posisi(np.array(posa))
 
+    def decoding(self, posisi):
+        """Decoding GBEST_BAIK"""
+        size = self.get_size()
+        dosen = self.get_dosen()
+        kelas = self.get_kelas()
+        sks = self.get_sks()
+        posisi = posisi.tolist()
+
+        iline = 0
+        while iline < len(posisi):
+            line = posisi[iline]
+            if line in sks[0]:
+                posisi.insert(iline, line)
+                iline += 1
+            elif line in sks[1]:
+                posisi.insert(iline, line)
+                posisi.insert(iline, line)
+                iline += 2
+            iline += 1
+
+        ### HARI ###
+        periode = 12  # Total periode dalam sehari
+        # ruang[:5]    = Ruang 101
+        # ruang[5:10]  = Ruang 102
+        # ruang[10:15] = Ruang 103
+        # dst.
+        ruang = [posisi[i * periode:(i + 1) * periode] for i in range((len(posisi) + periode -
+                                                                       1) // periode)]
+        nhari = 3  # Jumlah hari aktif dalam seminggu
+        days = []  # 2 Dimensi (Hari x Posisi/Partikel/Hari)
+        # days[0] = Senin
+        # days[1] = Selassa
+        # days[2] = Rabu
+        # dst.
+        for j in range(nhari):
+            day = [ruang[i * nhari + j] for i in range(len(ruang) // nhari)]
+            days.append(list(chain.from_iterable(day)))
+
+        ganda = self.get_ganda()
+
+        ### C_GANDA ###
+        gandahari = []  # ganda[i][j] ada di hari apa saja?
+        for j in ganda:
+            temp2 = []
+            for valj in j:
+                temp2.append([i for i, el in enumerate(days) if valj in el])
+            gandahari.append(list(chain.from_iterable(temp2)))
+
+        harisama = []
+        for j in gandahari:
+            harisama.append(list(Counter(j).values()))  # Jumlah hari yang sama
+
+        c_ganda = []  # Batasan 3 (Bentrok pelajaran pada hari yang sama)
+        for i in harisama:
+            count = 0    # Total hari yang sama
+            for j in i:
+                if j > 1:
+                    c_ganda.append(ganda[count])
+
+        ### C_TERPOTONG ###
+        pelajaran = list(chain.from_iterable(kelas)) # Menggabungkan kelas mjd 1 list
+        pelajaran.sort()
+        pelajaranhari = [] # pelajaran[i][j] ada di hari apa saja?
+        for i, j in enumerate(pelajaran):
+            pelajaranhari.append([i for i, el in enumerate(days) if j in el])
+
+        c_terpotong = []  # Batasan 4 (Pelajaran yang waktunya terpotong (berada di 2 hari))
+        for key, i in enumerate(pelajaranhari):
+            if len(i) > 1:
+                c_terpotong.append(key + 1)
+                # count += 1
+
+        ### C_TAK_TERSEDIA ###
+        ishoma = [j for i, j in enumerate(posisi) if i % 12 == 6 and i % 36 != 30]
+
+        # Jumatan dan setelahnya
+        jumat = [j for i, j in enumerate(posisi) if 28 < i % 36 < 36]
+
+        # Senin sore
+        senin = [j for i, j in enumerate(posisi) if i > 114 if 6 < i % 36 < 12]
+
+        # Semua data (termasuk dummy) yang masuk di periode "tak tersedia"
+        semua = list(chain.from_iterable([ishoma, jumat, senin]))
+
+        # Data dummy dihapus, sehingga hanya data pelajaran
+        c_tak_tersedia = list(set([i for i in semua if i < 36]))
+
+        def c_dosen_n_kelas(data):
+            """Constraint Dosen / Kelas bentrok. Walaupun sama Jam & Hari."""
+            nilaip_indeksd = []  # [Dosen ke, Pelajaran ke]
+            # Dari partikel (P), Nilai yang di bawah 36 ada di indeks ke berapa saja?
+            indeksp_bawah71 = []
+
+            for k in posisi:
+                if k < 36:
+                    # Masukkan i dan indeks dari j yang isinya kurang dari 71 ke row
+                    # Masukkan posisi ke daftar
+                    nilaip_indeksd.append([[i, j.index(k)] for i, j in enumerate(data) if k in j]
+                                          [0])
+            # Masukkan i ke-x yang kurang dari 71 ke row71
+            indeksp_bawah71 = list(filter(lambda x: posisi[x] < 36, range(len(posisi))))
+
+            nilaid_selainp = []  # Nilai D selain nilai P
+
+            for j in nilaip_indeksd:
+                temp = data[j[0]][:]  # Salin Dosen j[0] ke C
+                # Menghapus Dosen j[0] pelajaran j[1] tanpa menggangu variabel D asal
+                del temp[j[1]]
+                nilaid_selainp.append(temp)  # Masukkan C ke row
+
+            nperiode = 12
+            mod = nperiode * nhari
+            c_dosen_kelas = []  # Batasan pertama atau kedua: bentrok dosen atau kelas
+            for i, j in enumerate(nilaid_selainp):
+                temp = []
+                for k in j:
+                    if (posisi.index(k) - indeksp_bawah71[i]) % mod == 0:
+                        temp.append(posisi[indeksp_bawah71[i]])
+                        temp.append(k)
+                    if (posisi.index(k) + 1 - indeksp_bawah71[i]) % mod == 0:
+                        temp.append(posisi[indeksp_bawah71[i]])
+                        temp.append(k)
+                    if k in sks[1]:
+                        if (posisi.index(k) + 2 - indeksp_bawah71[i]) % mod == 0:
+                            temp.append(posisi[indeksp_bawah71[i]])
+                            temp.append(k)
+                if temp:
+                    temp.sort()
+                    c_dosen_kelas.append(temp)
+            # Unique
+            c_dosen_kelas = [list(y) for y in set([tuple(x) for x in c_dosen_kelas])]
+
+            return c_dosen_kelas
+
+        c_kelas = c_dosen_n_kelas(kelas)
+        c_dosen = c_dosen_n_kelas(dosen)
+
+        # Filter constraints
+        constraints = []
+        constraints.append(c_tak_tersedia) # c_tak_tersedia
+        constraints.append(c_terpotong) # c_terpotong
+        constraints.append(c_ganda) # c_ganda
+        constraints.append(c_kelas) # c_kelas
+        constraints.append(c_dosen) # c_dosen
+
+        for key, val in enumerate(constraints):
+            if key != len(constraints) - 2:
+                for i in range(key+1, len(constraints)):
+                    temp = np.array(constraints[i])
+                    if len(temp.shape) == 1:
+                        temp2 = set(val) & set(constraints[i])
+                        if temp2:
+                            for j in temp2:
+                                constraints[i].remove(j)
+                    else:
+                        for k in constraints[i]:
+                            temp2 = set(val) & set(k)
+                            if temp2:
+                                constraints[i].remove(k)
+
+
+        return harisama
+
+
 if __name__ == "__main__":
     JADWAL = Penjadwalan()
 
@@ -641,11 +784,13 @@ if __name__ == "__main__":
         FITNESS_TERBAIK.append(FITNESS_GBEST)
         ITERASI += 1
     # print(f'GBEST :\n{GBEST}')
-    GBEST_BAIK = JADWAL.perbaikan_partikel(GBEST.tolist())
+    # GBEST_BAIK = JADWAL.perbaikan_partikel(GBEST.tolist())
+    # JADWAL.hitung_fitness(GBEST_BAIK)
     # print(len(GBEST.shape))
     # print(len(POSISI.shape))
-    print(f'GBEST_BAIK :\n{GBEST_BAIK}\n')
-    print(f'FITNESS_TERBAIK :\n{FITNESS_TERBAIK[-1]}')
+    # print(f'GBEST_BAIK :\n{GBEST_BAIK}\n')
+    # print(f'FITNESS_TERBAIK :\n{FITNESS_TERBAIK[-1]}')
+    print(JADWAL.decoding(GBEST))
 
 
     # print(PBEST)
