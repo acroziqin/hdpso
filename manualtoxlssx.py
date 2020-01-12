@@ -33,6 +33,7 @@ class Penjadwalan:
         self.ganda = [[32, 34], # pelajaran 2 kali pertemuan
                       [33, 35]]
         self.gbest = []
+        self.hari = ['Senin', 'Rabu', 'Jumat']
         self.kelas = [[1, 4, 8, 11, 15, 21, 25, 29], # kelas[0] memiliki pelajaran 1, 4, 8, ..., 29
                       [2, 5, 9, 12, 16, 22, 26, 30], # kelas[1] memiliki pelajaran 2, 5, 9, ..., 30
                       [7, 14, 24, 28],               # kelas[2] memiliki pelajaran 7, 14, 24, & 28
@@ -42,11 +43,48 @@ class Penjadwalan:
         self.limit = 3
         self.n_posisi = 577
         self.pbest = [[]]
+        self.pelajaran = [
+            [1, 'Pancasila', 2, 'Ali Rifan', 'PAI-1-A'],
+            [2, 'Pancasila', 2, 'Ali Rifan', 'PAI-1-B'],
+            [3, 'Ilmu Pendidikan', 3, 'A. Qomarudin', 'PAI-3-A'],
+            [4, 'Bahasa Indonesia', 2, 'Handoko', 'PAI-1-A'],
+            [5, 'Bahasa Indonesia', 2, 'Handoko', 'PAI-1-B'],
+            [6, 'Bahasa Indonesia', 2, 'Handoko', 'MPI-1-A'],
+            [7, 'Bahasa Indonesia', 2, 'Handoko', 'PGMI-1-A'],
+            [8, 'Ushul Fiqih', 2, 'Kasuwi Saiban', 'PAI-1-A'],
+            [9, 'Ushul Fiqih', 2, 'Kasuwi Saiban', 'PAI-1-B'],
+            [10, 'Ushul Fiqih', 2, 'Kasuwi Saiban', 'MPI-1-A'],
+            [11, 'Studi Al-Quran', 2, 'Mokhamat Nafi', 'PAI-1-A'],
+            [12, 'Studi Al-Quran', 2, 'Mokhamat Nafi', 'PAI-1-B'],
+            [13, 'Studi Al-Quran', 2, 'Mokhamat Nafi', 'MPI-1-A'],
+            [14, 'Studi Al-Quran', 2, 'Mokhamat Nafi', 'PGMI-1-A'],
+            [15, 'Bahasa Inggris', 2, 'Hilman Wajdi', 'PAI-1-A'],
+            [16, 'Bahasa Inggris', 2, 'Hilman Wajdi', 'PAI-1-B'],
+            [17, 'Bahasa Inggris', 2, 'Hilman Wajdi', 'MPI-1-A'],
+            [18, 'Ilmu Pendidikan', 3, 'A. Qomarudin', 'PAI-3-B'],
+            [19, 'Qowaidul Fiqih', 3, 'Zaenu Zuhdi', 'PAI-3-A'],
+            [20, 'Qowaidul Fiqih', 3, 'Zaenu Zuhdi', 'PAI-3-B'],
+            [21, 'Bahasa Arab', 2, 'Moh. Nadhif', 'PAI-1-A'],
+            [22, 'Bahasa Arab', 2, 'Moh. Nadhif', 'PAI-1-B'],
+            [23, 'Media Pembelajaran PAI', 3, 'Muh. Rodhi Zamzami', 'PAI-3-A'],
+            [24, 'Bahasa Arab', 2, 'Moh. Nadhif', 'PGMI-1-A'],
+            [25, 'Pengantar Studi Islam', 2, 'Umi Salamah', 'PAI-1-A'],
+            [26, 'Pengantar Studi Islam', 2, 'Umi Salamah', 'PAI-1-B'],
+            [27, 'Pengantar Studi Islam', 2, 'Umi Salamah', 'MPI-1-A'],
+            [28, 'Pengantar Studi Islam', 2, 'Misbahul Munir', 'PGMI-1-A'],
+            [29, 'IAD & IBD', 2, 'Misbahul Munir', 'PAI-1-A'],
+            [30, 'IAD & IBD', 2, 'Misbahul Munir', 'PAI-1-B'],
+            [31, 'Media Pembelajaran PAI', 3, 'Muh. Rodhi Zamzami', 'PAI-3-B'],
+            [32, 'Takhrijul Hadits', 2, 'Damanhuri', 'PAI-3-A'],
+            [33, 'Takhrijul Hadits', 2, 'Damanhuri', 'PAI-3-B'],
+            [34, 'Takhrijul Hadits', 2, 'Damanhuri', 'PAI-3-A'],
+            [35, 'Takhrijul Hadits', 2, 'Damanhuri', 'PAI-3-B']]
         self.prand = [[]]
         self.posisi = [[]]
         self.rglob = 0
         self.rloc = 0
         self.rrand = 0
+        self.ruangan = ['101', '102', '103', '304', '305', '306']
         self.size = 3
         self.sks = [[1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 21, 22, 24, 25, 26,
                      27, 28, 29, 30, 32, 33, 34, 35], # sks[0] = pelajaran yang memiliki 2 sks
@@ -108,6 +146,10 @@ class Penjadwalan:
         """Ambil Gbest"""
         return self.gbest
 
+    def get_hari(self):
+        """Ambil Hari"""
+        return self.hari
+
     def get_kelas(self):
         """Ambil data kelas"""
         return self.kelas
@@ -127,6 +169,10 @@ class Penjadwalan:
     def get_pbest(self):
         """Ambil Pbset"""
         return self.pbest
+
+    def get_pelajaran(self):
+        """Ambil Pelajaran"""
+        return self.pelajaran
 
     def set_prand(self, prand):
         """Ubah Prand"""
@@ -167,6 +213,10 @@ class Penjadwalan:
     def get_rrand(self):
         """Ambil rrand"""
         return self.rrand
+
+    def get_ruangan(self):
+        """Ambil Ruangan"""
+        return self.ruangan
 
     def get_size(self):
         """Ambil ukuran populasi"""
@@ -219,6 +269,7 @@ class Penjadwalan:
         kelas = self.get_kelas()
         sks = self.get_sks()
         posisi = posisi.tolist()
+        nperiode = 12
 
         def perbaikan_partikel(posisi):
             """Memasukkan posisi tiap solusi ke seluruh hari
@@ -391,14 +442,14 @@ class Penjadwalan:
         def c_tak_tersedia():
             """Data pelajaran yang masuk di periode 'tak tersedia'"""
             # Jam ishoma selain Jumat
-            ishoma = [[j for i, j in enumerate(k) if i % 12 == 6 and i % 36 != 30] for k in
-                      posisi_baik]
+            ishoma = [[j for i, j in enumerate(k) if i % nperiode == 6 and i % (nperiode * size) !=
+                       ((nperiode * size) - 6)] for k in posisi_baik]
 
             # Jumatan dan setelahnya
-            jumat = [[j for i, j in enumerate(k) if 28 < i % 36 < 36] for k in posisi_baik]
+            jumat = [[j for i, j in enumerate(k) if ((nperiode * size) - 8) < i % (nperiode * size) < (nperiode * size)] for k in posisi_baik]
 
             # Senin sore
-            senin = [[j for i, j in enumerate(k) if i > 114 if 6 < i % 36 < 12] for k in
+            senin = [[j for i, j in enumerate(k) if i > 114 if 6 < i % (nperiode * size) < nperiode] for k in
                      posisi_baik]
 
             # Semua data (termasuk dummy) yang masuk di periode "tak tersedia"
@@ -406,7 +457,7 @@ class Penjadwalan:
                      range(len(posisi_baik))]
 
             # Data dummy dihapus, sehingga hanya data pelajaran
-            pelajaran = [[i for i in j if i < 36] for j in semua]
+            pelajaran = [[i for i in j if i < (nperiode * size)] for j in semua]
 
             # Batasan 5
             batasan5 = [len(i) for i in pelajaran]
@@ -532,6 +583,8 @@ class Penjadwalan:
         dosen = self.get_dosen()
         kelas = self.get_kelas()
         sks = self.get_sks()
+        day = self.get_hari()
+        ruangan = self.get_ruangan()
         posisi = posisi.tolist()
         nperiode = 12
         nhari = 3
@@ -561,8 +614,8 @@ class Penjadwalan:
             # ruang[5:10]  = Ruang 102
             # ruang[10:15] = Ruang 103
             # dst.
-            ruang = [data_pos[i * nperiode:(i + 1) * nperiode] for i in range((len(data_pos) + nperiode
-                                                                             - 1) // nperiode)]
+            ruang = [data_pos[i * nperiode:(i + 1) * nperiode] for i in
+                     range((len(data_pos) + nperiode - 1) // nperiode)]
             nhari = 3  # Jumlah hari aktif dalam seminggu
             days = []  # 2 Dimensi (Hari x Posisi/Partikel/Hari)
             # days[0] = Senin
@@ -681,15 +734,14 @@ class Penjadwalan:
         for key, val in enumerate(constraints):
             if key != len(constraints) - 2:
                 for i in range(key+1, len(constraints)):
-                    temp = np.array(constraints[i])
-                    if len(temp.shape) == 1:
-                        temp2 = set(val) & set(constraints[i])
+                    if len(np.array(constraints[i]).shape) == 1:
+                        temp2 = [tmp for tmp in val for tmp2 in constraints[i] if tmp == tmp2]
                         if temp2:
                             for j in temp2:
                                 constraints[i].remove(j)
                     else:
                         for k in constraints[i]:
-                            temp2 = set(val) & set(k)
+                            temp2 = [tmp for tmp in val for tmp2 in k if tmp == tmp2]
                             if temp2:
                                 constraints[i].remove(k)
 
@@ -709,26 +761,51 @@ class Penjadwalan:
                     pos_tabel[key] = 0
 
         pelajaran = list(range(1, npelajaran + 1))
-
         halo = hari(pos_tabel)
         mtx_tabel = []
         for key, val in enumerate(halo):
             temp = []
             for j in range(nruangan):
-                temp2 = {}
-                temp2[j] = val[j * nperiode : (j + 1) * nperiode]
-                if any(elem in temp2[j]  for elem in pelajaran):
-                    temp.append(temp2)
-            mtx_tabel.append(temp)
+                temp2 = []
+                temp2 = val[j * nperiode : (j + 1) * nperiode]
+                if any(elem in temp2 for elem in pelajaran):
+                    temp.append((ruangan[j], temp2))
+            mtx_tabel.append((day[key], temp))
 
-        for i in mtx_tabel:
-            for j in i:
-                for val in j.values():
-                    pot = val[:len(val)-1]
-                    ong = val[1:]
-                    for key, k in enumerate(pot):
-                        if k != 0 and k == ong[key]:
-                            val.remove(k)
+        for hari in mtx_tabel:
+            for ruangan in hari[1]:
+                pot = ruangan[1][:len(ruangan[1])-1]
+                ong = ruangan[1][1:]
+                for key, k in enumerate(pot):
+                    if k != 0 and k == ong[key]:
+                        ruangan[1].remove(k)
+
+        pelajaran = self.get_pelajaran()
+        for i in pelajaran:
+            for key, val in enumerate(i):
+                if key == len(i) - 1:
+                    kelas = val.split("-")
+                    i.append(kelas[0])
+                    i.append(kelas[2])
+                    i.remove(val)
+                    break
+
+        for hari in mtx_tabel:
+            for all_no_pelajaran in hari[1]:
+                panjang = len(all_no_pelajaran[1])
+                for no_pelajaran in all_no_pelajaran[1]:
+                    if not isinstance(no_pelajaran, list):
+                        if no_pelajaran in range(1, len(pelajaran)+1):
+                            for data_pelajaran in pelajaran:
+                                if no_pelajaran == data_pelajaran[0]:
+                                    del data_pelajaran[0]
+                                    all_no_pelajaran[1].append(data_pelajaran)
+                        else:
+                            kosong = ['', 1, '', '', '']
+                            all_no_pelajaran[1].append(kosong)
+                    else:
+                        break
+                del all_no_pelajaran[1][:panjang]
 
         return mtx_tabel
 
