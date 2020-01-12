@@ -297,8 +297,6 @@ class Penjadwalan:
                 i += 1
             return np.array(posisi)
 
-            
-
         posisi_baik = perbaikan_partikel(posisi)
 
         def hari():
@@ -436,14 +434,38 @@ class Penjadwalan:
                     k.append([i for i, el in enumerate(valdays) if j in el])
                 pelajaranhari.append(k)
 
-            batasan4 = []  # Batasan 4 (Pelajaran yang waktunya terpotong (berada di 2 hari))
+            potong = []  # Batasan 4 (Pelajaran yang waktunya terpotong (berada di 2 hari))
             for i in pelajaranhari:
                 count = 0
                 for j in i:
                     if len(j) > 1:
                         count += 1
-                batasan4.append(count)
+                potong.append(count)
 
+            # Periode 6 & 8 kecuali Jumat
+            periode6_dgnnol = [[j for i, j in enumerate(k) if i % nperiode == 5] for k in posisi_baik]
+            periode6_tnpnol = []
+            for i in periode6_dgnnol:
+                i = [j for j in i if j != 0]
+                periode6_tnpnol.append(i)
+            periode8_dgnnol = [[j for i, j in enumerate(k) if i % nperiode == 7] for k in posisi_baik]
+            periode8_tnpnol = []
+            for i in periode8_dgnnol:
+                i = [j for j in i if j != 0]
+                periode8_tnpnol.append(i)
+            periode6dan8 = []
+            countlist = []
+            for i, j in enumerate(periode8_tnpnol):
+                periode6dan8.append(periode6_tnpnol[i] + j)
+                temp = dict(Counter(periode6dan8[i]))
+                count = 0
+                for k in temp.values():
+                    if k > 1:
+                        count += 1
+                countlist.append(count)
+            batasan4 = []
+            for i, j in enumerate(potong):
+                batasan4.append(j + countlist[i])
             return batasan4
 
         c_dosen = c_dosen_n_kelas(dosen) # C1
